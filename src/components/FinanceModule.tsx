@@ -3,6 +3,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CreditCard,
+  Download,
   Plus,
   Printer,
   Search,
@@ -11,6 +12,12 @@ import {
 } from 'lucide-react';
 import { schoolApi } from '../api/schoolApi.ts';
 import type { Lang } from '../i18n/translations.ts';
+import {
+  downloadPayslipPng,
+  downloadPrintableHtml,
+  downloadReceiptPng,
+  triggerIsolatedPrint,
+} from '../utils/printDocument.ts';
 import type {
   ExpenseCategory,
   Invoice,
@@ -963,20 +970,70 @@ export const FinanceModule: React.FC<FinanceModuleProps> = ({
       {/* Printable Official Receipt Modal */}
       {receiptInvoice && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-lg w-full p-6 border border-slate-300 space-y-5">
-            <div className="flex items-center justify-between no-print">
+          <div className="bg-white rounded-xl max-w-lg w-full p-6 border border-slate-300 space-y-5 max-h-[92vh] overflow-y-auto">
+            <div className="flex flex-wrap items-center justify-between gap-2 no-print">
               <span className="text-xs font-semibold text-slate-500">
                 {lang === 'km' ? 'វិក្កយបត្រផ្លូវការ (Official Receipt)' : 'Official Tuition Receipt'}
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-1.5">
                 <button
-                  onClick={() => window.print()}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-900 text-white rounded-lg"
+                  type="button"
+                  onClick={async () => {
+                    const st = db.students.find((s) => s.id === receiptInvoice.studentId);
+                    await downloadReceiptPng(receiptInvoice, st, db.schoolProfile);
+                    notify(
+                      lang === 'km'
+                        ? `បានទាញយករូបភាពវិក្កយបត្រ ${receiptInvoice.invoiceNo}.png រួចរាល់!`
+                        : `Downloaded ${receiptInvoice.invoiceNo}.png`
+                    );
+                  }}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  {lang === 'km' ? 'ទាញយក PNG' : 'Save PNG'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    downloadPrintableHtml(
+                      'gis-receipt-sheet',
+                      `${receiptInvoice.invoiceNo}.html`,
+                      `Receipt ${receiptInvoice.invoiceNo}`
+                    );
+                    notify(
+                      lang === 'km'
+                        ? `បានទាញយកឯកសារបោះពុម្ព ${receiptInvoice.invoiceNo}.html រួចរាល់!`
+                        : `Downloaded printable ${receiptInvoice.invoiceNo}.html`
+                    );
+                  }}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  {lang === 'km' ? 'ទាញយក HTML' : 'Save HTML'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const ok = triggerIsolatedPrint('gis-receipt-sheet');
+                    if (!ok) {
+                      downloadPrintableHtml(
+                        'gis-receipt-sheet',
+                        `${receiptInvoice.invoiceNo}.html`,
+                        `Receipt ${receiptInvoice.invoiceNo}`
+                      );
+                      notify(
+                        lang === 'km'
+                          ? 'Preview បិទការបោះពុម្ពផ្ទាល់ — បានទាញយកឯកសារវិក្កយបត្រ (.html) ជំនួសរួចរាល់! សូមបើកដើម្បី Print ឬប្រើ PNG។'
+                          : 'Preview iframe blocks direct print — downloaded printable .html receipt instead!'
+                      );
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   {lang === 'km' ? 'បោះពុម្ព' : 'Print'}
                 </button>
-                <button onClick={() => setReceiptInvoice(null)} className="p-1.5 text-slate-400">
+                <button type="button" onClick={() => setReceiptInvoice(null)} className="p-1.5 text-slate-400 hover:text-slate-700">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -985,14 +1042,14 @@ export const FinanceModule: React.FC<FinanceModuleProps> = ({
             {(() => {
               const st = db.students.find((s) => s.id === receiptInvoice.studentId);
               return (
-                <div className="border border-slate-300 p-5 space-y-4 text-xs">
+                <div id="gis-receipt-sheet" className="border border-slate-300 p-5 space-y-4 text-xs bg-white">
                   <div className="flex items-center justify-between border-b border-slate-200 pb-3">
                     <div className="flex items-center gap-3">
                       <img
-                        src="/src/assets/images/gis_school_emblem_1794839258387.jpg"
+                        src="/assets/aistudio/photo_2026-11-11_21-49-33_c07b1e7d.jpg"
                         alt="GIS Emblem"
                         referrerPolicy="no-referrer"
-                        className="w-12 h-12 object-contain"
+                        className="w-12 h-12 object-contain rounded-full"
                       />
                       <div>
                         <div className="font-bold text-sm text-slate-900">{db.schoolProfile.nameKh}</div>
@@ -1060,17 +1117,44 @@ export const FinanceModule: React.FC<FinanceModuleProps> = ({
       {payslipRecord && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl max-w-md w-full p-6 border border-slate-300 space-y-4 text-xs">
-            <div className="flex items-center justify-between no-print">
+            <div className="flex flex-wrap items-center justify-between gap-2 no-print">
               <span className="font-semibold text-slate-600">Staff Payslip · {payslipRecord.month}</span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <button
-                  onClick={() => window.print()}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-900 text-white rounded-lg"
+                  type="button"
+                  onClick={async () => {
+                    const st = db.teachers.find((t) => t.id === payslipRecord.staffId);
+                    await downloadPayslipPng(payslipRecord, st, db.schoolProfile);
+                    notify(lang === 'km' ? 'បានទាញយករូបភាពបង្កាន់ដៃប្រាក់ខែ (.png)!' : 'Downloaded payslip PNG.');
+                  }}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  PNG
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const ok = triggerIsolatedPrint('gis-payslip-sheet');
+                    if (!ok) {
+                      downloadPrintableHtml(
+                        'gis-payslip-sheet',
+                        `Payslip-${payslipRecord.month}.html`,
+                        `Staff Payslip ${payslipRecord.month}`
+                      );
+                      notify(
+                        lang === 'km'
+                          ? 'Preview បិទការបោះពុម្ពផ្ទាល់ — បានទាញយកឯកសារបង្កាន់ដៃ (.html) ជំនួសរួចរាល់!'
+                          : 'Downloaded printable .html payslip!'
+                      );
+                    }
+                  }}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-900 text-white rounded-lg hover:bg-slate-800"
                 >
                   <Printer className="w-3.5 h-3.5" />
-                  Print
+                  {lang === 'km' ? 'បោះពុម្ព' : 'Print'}
                 </button>
-                <button onClick={() => setPayslipRecord(null)}>
+                <button type="button" onClick={() => setPayslipRecord(null)}>
                   <X className="w-5 h-5 text-slate-400" />
                 </button>
               </div>
@@ -1078,7 +1162,7 @@ export const FinanceModule: React.FC<FinanceModuleProps> = ({
             {(() => {
               const st = db.teachers.find((t) => t.id === payslipRecord.staffId);
               return (
-                <div className="border border-slate-300 p-4 space-y-3">
+                <div id="gis-payslip-sheet" className="border border-slate-300 p-4 space-y-3 bg-white">
                   <div className="font-bold text-sm text-slate-900">{db.schoolProfile.nameKh}</div>
                   <div className="text-slate-600">
                     Payslip for <strong>{st?.nameKh}</strong> ({st?.nameEn}) · {st?.staffCode}

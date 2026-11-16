@@ -4,6 +4,7 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  Download,
   Printer,
   Search,
   Send,
@@ -12,6 +13,7 @@ import {
 } from 'lucide-react';
 import { schoolApi } from '../api/schoolApi.ts';
 import type { Lang } from '../i18n/translations.ts';
+import { downloadPrintableHtml, triggerIsolatedPrint } from '../utils/printDocument.ts';
 import type {
   AttendanceStatus,
   SchoolDatabase,
@@ -812,20 +814,55 @@ export const StudentsModule: React.FC<StudentsModuleProps> = ({
       {/* Printable Certificate / Completion Letter Modal */}
       {certificateStudent && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-2xl w-full p-8 border border-slate-300 space-y-6">
-            <div className="flex items-center justify-between no-print">
+          <div className="bg-white rounded-xl max-w-2xl w-full p-8 border border-slate-300 space-y-6 max-h-[92vh] overflow-y-auto">
+            <div className="flex flex-wrap items-center justify-between gap-2 no-print">
               <span className="text-xs font-semibold text-slate-500">
                 {lang === 'km' ? 'គំរូលិខិតបញ្ជាក់ការសិក្សា / សញ្ញាបត្រ' : 'Official Certificate Preview'}
               </span>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => window.print()}
+                  type="button"
+                  onClick={() => {
+                    downloadPrintableHtml(
+                      'gis-certificate-sheet',
+                      `Certificate-${certificateStudent.studentCode}.html`,
+                      `Certificate - ${certificateStudent.nameEn}`
+                    );
+                    showToast(
+                      lang === 'km'
+                        ? `បានទាញយកលិខិតបញ្ជាក់ ${certificateStudent.studentCode}.html រួចរាល់!`
+                        : `Downloaded ${certificateStudent.studentCode}.html`
+                    );
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  {lang === 'km' ? 'ទាញយក HTML' : 'Save HTML'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const ok = triggerIsolatedPrint('gis-certificate-sheet');
+                    if (!ok) {
+                      downloadPrintableHtml(
+                        'gis-certificate-sheet',
+                        `Certificate-${certificateStudent.studentCode}.html`,
+                        `Certificate - ${certificateStudent.nameEn}`
+                      );
+                      showToast(
+                        lang === 'km'
+                          ? 'Preview បិទការបោះពុម្ពផ្ទាល់ — បានទាញយកឯកសារ (.html) ជំនួសរួចរាល់!'
+                          : 'Preview iframe blocks direct print — downloaded printable .html certificate!'
+                      );
+                    }
+                  }}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   {lang === 'km' ? 'បោះពុម្ព' : 'Print'}
                 </button>
                 <button
+                  type="button"
                   onClick={() => setCertificateStudent(null)}
                   className="p-1.5 text-slate-400 hover:text-slate-700"
                 >
@@ -834,12 +871,12 @@ export const StudentsModule: React.FC<StudentsModuleProps> = ({
               </div>
             </div>
 
-            <div className="border-2 border-slate-800 p-8 text-center space-y-4">
+            <div id="gis-certificate-sheet" className="border-2 border-slate-800 p-8 text-center space-y-4 bg-white">
               <img
-                src="/src/assets/images/gis_school_emblem_1794839258387.jpg"
+                src="/assets/aistudio/photo_2026-11-11_21-49-33_c07b1e7d.jpg"
                 alt="GIS School Emblem"
                 referrerPolicy="no-referrer"
-                className="w-20 h-20 object-contain mx-auto"
+                className="w-20 h-20 object-contain mx-auto rounded-full"
               />
               <div>
                 <h2 className="text-lg font-bold text-slate-900">{db.schoolProfile.nameKh}</h2>

@@ -152,10 +152,10 @@ export default function App() {
         {/* School Brand Header */}
         <div className="px-4 py-5 border-b border-slate-200 flex items-center gap-3">
           <img
-            src="/src/assets/images/gis_school_emblem_1794839258387.jpg"
+            src="/assets/aistudio/photo_2026-11-11_21-49-33_c07b1e7d.jpg"
             alt="GIS School Emblem"
             referrerPolicy="no-referrer"
-            className="w-10 h-10 object-contain rounded-lg border border-slate-200 bg-white shrink-0"
+            className="w-10 h-10 object-contain rounded-full border border-slate-200 bg-white shrink-0"
           />
           <div className="min-w-0">
             <div className="text-sm font-bold text-slate-900 truncate">GIS School</div>
