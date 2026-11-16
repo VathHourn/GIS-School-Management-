@@ -1,0 +1,6 @@
+{
+  "name": "GIS International Language School",
+  "description": "ប្រព័ន្ធគ្រប់គ្រងសាលាភាសាអន្តរជាតិ ជី អាយ អេស (GIS) — គ្រប់គ្រងសិស្ស វត្តមាន កាលវិភាគ ថ្លៃសិក្សា បៀវត្សរ៍ ពិន្ទុ និងវិបផតថលមាតាបិតា",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
