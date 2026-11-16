@@ -4,6 +4,7 @@ import {
   CalendarClock,
   CreditCard,
   GraduationCap,
+  HardDrive,
   LayoutDashboard,
   Library,
   Menu,
@@ -18,6 +19,7 @@ import { schoolApi } from './api/schoolApi.ts';
 import { AcademicsModule } from './components/AcademicsModule.tsx';
 import { CommunicationsModule } from './components/CommunicationsModule.tsx';
 import { FinanceModule } from './components/FinanceModule.tsx';
+import { GoogleDriveModule } from './components/GoogleDriveModule.tsx';
 import { LibraryModule } from './components/LibraryModule.tsx';
 import { OverviewModule } from './components/OverviewModule.tsx';
 import { ParentPortalModule } from './components/ParentPortalModule.tsx';
@@ -34,6 +36,7 @@ type NavTab =
   | 'finance'
   | 'communications'
   | 'library'
+  | 'drive'
   | 'portal';
 
 export default function App() {
@@ -74,6 +77,7 @@ export default function App() {
     { id: 'finance', label: t.navFinance, icon: CreditCard },
     { id: 'communications', label: t.navComms, icon: MessageSquare },
     { id: 'library', label: t.navLibrary, icon: Library },
+    { id: 'drive', label: t.navDrive, icon: HardDrive },
     { id: 'portal', label: t.navPortal, icon: UserCheck },
   ];
 
@@ -332,6 +336,8 @@ export default function App() {
           {activeTab === 'library' && (
             <LibraryModule db={db} lang={lang} onRefresh={fetchDatabase} />
           )}
+
+          {activeTab === 'drive' && <GoogleDriveModule db={db} lang={lang} />}
 
           {activeTab === 'portal' && <ParentPortalModule db={db} lang={lang} />}
         </main>

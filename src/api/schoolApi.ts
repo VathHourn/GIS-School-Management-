@@ -86,6 +86,15 @@ export const schoolApi = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+  updateProgram: (id: string, payload: Partial<Program>) =>
+    request<Program>(`/api/programs/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+  deleteProgram: (id: string) =>
+    request<{ deleted: string }>(`/api/programs/${id}`, {
+      method: 'DELETE',
+    }),
 
   createExam: (payload: Partial<ExamSchedule>) =>
     request<ExamSchedule>('/api/exams', {

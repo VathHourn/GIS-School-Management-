@@ -308,6 +308,39 @@ async function startServer() {
     res.json(prog);
   });
 
+  app.patch('/api/programs/:id', (req, res) => {
+    const db = loadDatabase();
+    const idx = db.programs.findIndex((p) => p.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ error: 'Program not found' });
+    const payload = req.body as Partial<Program>;
+    const existing = db.programs[idx];
+    db.programs[idx] = {
+      ...existing,
+      code: payload.code !== undefined ? payload.code.toUpperCase() : existing.code,
+      nameKh: payload.nameKh !== undefined ? payload.nameKh : existing.nameKh,
+      nameEn: payload.nameEn !== undefined ? payload.nameEn : existing.nameEn,
+      levels: payload.levels !== undefined ? payload.levels : existing.levels,
+      termTuitionUsd: payload.termTuitionUsd !== undefined ? Number(payload.termTuitionUsd) : existing.termTuitionUsd,
+      bookFeeUsd: payload.bookFeeUsd !== undefined ? Number(payload.bookFeeUsd) : existing.bookFeeUsd,
+      durationWeeks: payload.durationWeeks !== undefined ? Number(payload.durationWeeks) : existing.durationWeeks,
+      modules: payload.modules !== undefined ? payload.modules : existing.modules,
+    };
+    saveDatabase(db);
+    res.json(db.programs[idx]);
+  });
+
+  app.delete('/api/programs/:id', (req, res) => {
+    const db = loadDatabase();
+    if (db.programs.length <= 1) {
+      return res.status(400).json({ error: 'At least one language program must remain active.' });
+    }
+    const exists = db.programs.some((p) => p.id === req.params.id);
+    if (!exists) return res.status(404).json({ error: 'Program not found' });
+    db.programs = db.programs.filter((p) => p.id !== req.params.id);
+    saveDatabase(db);
+    res.json({ deleted: req.params.id });
+  });
+
   // Exams & Grades
   app.post('/api/exams', (req, res) => {
     const db = loadDatabase();
